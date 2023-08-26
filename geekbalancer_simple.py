@@ -11,7 +11,17 @@ def read_json_file(filename):
         print(f"Error: Invalid JSON data in file '{filename}'.")
 
 def calculate_composite_score(player_data):
-    return sum([player_data['KDR'], player_data['aKDR'], player_data['alltime_kdr'], player_data['year_kdr'], player_data['last90_kdr']]) / 5.0
+    return sum([
+        player_data['KDR'],
+        player_data['aKDR'],
+        player_data['alltime_kdr'],
+        player_data['year_kdr'],
+        player_data['last90_kdr'],
+        player_data['kills'] / (player_data['deaths'] + 1),
+        player_data['assists'] / (player_data['deaths'] + 1),
+        player_data['kills'] / (player_data['assists'] + 1),
+        player_data['tier'] == 'West1: Master'
+    ]) / 9.0
 
 def create_teams(data):
     # Calculate composite score for each player
@@ -74,7 +84,7 @@ def create_teams_plusminus(data, threshold):
 def main():
     print("\nGEEKFEST GEEK BALANCER\n")
     # Read JSON data from file
-    data = read_json_file('geekstats.json')
+    data = read_json_file('summer_stats.json')
 
     if data is None:
         return
