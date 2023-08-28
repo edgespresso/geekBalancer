@@ -1,7 +1,9 @@
 import json
-import itertools
-import random
 import requests
+
+def create_api_string(base_url, start_date, end_date):
+    api_string = f"{base_url}?start_date={start_date}&end_date={end_date}"
+    return api_string
 
 def get_json_from_api(url):
     try:
@@ -23,7 +25,6 @@ def write_json_file(filename, data):
         # Write parsed JSON object to file
         with open(filename, 'w') as f:
             json.dump(parsed_data, f, indent=4)
-        print(f"JSON data written to file '{filename}'.")
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON data in file '{filename}'.")
     except IOError:
@@ -161,12 +162,12 @@ def balance_teams(data, threshold, max_attempts=1):
 
 def print_top_teams(teams):
     sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
-    print("Top 10 team configurations with smallest difference in aggregate scores:")
+    print("\nTop 10 Team Configurations - Sorted by Score Differential\n")
     for i, (team_a, team_b) in enumerate(sorted_teams[:10]):
         team_a_score = sum([score for _, score in team_a])
         team_b_score = sum([score for _, score in team_b])
-        print("=====================================")
-        print(f"BALANCE TEAM OPTION #{i+1}:")
+        print("=========================================================")
+        print(f"OPTION #{i+1}:")
         print(f"Team A score   : {team_a_score:.4f}")
         print(f"Team B score   : {team_b_score:.4f}")
         print(f"Difference     : {abs(team_a_score - team_b_score):.4f}")
@@ -182,11 +183,20 @@ def main():
     # Set threshold
     threshold = 1.0
 
-    statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31"
+    # Set parameters for the API call
+    base_url = "http://stats.geekfestclan.com/api/stats/playerstats/"
+    start_date = "2023-07-01"
+    end_date = "2023-07-07"
+    api_string = create_api_string(base_url, start_date, end_date)
+    statsURL = api_string
+
+    #statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31"
     #statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-07-01&end_date=2023-07-07"
 
     print("\nGEEKFEST GEEK BALANCER\n")
-    
+    print(f"Start Date : {start_date}")
+    print(f"End Date   : {end_date}")
+
     # Read JSON data from file
     data_temp = get_json_from_api(statsURL)
 
