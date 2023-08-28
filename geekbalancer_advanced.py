@@ -14,6 +14,29 @@ def get_json_from_api(url):
     except ValueError:
         print(f"Error: Invalid JSON data from API.")
 
+def get_json_from_api_clean(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        cleaned_data = {}
+        for player in data:
+            name = player['player_name']
+            stats = player['stats']
+            cleaned_stats = {}
+            for key, value in stats.items():
+                if isinstance(value, str):
+                    value = value.strip()
+                if value == '':
+                    value = None
+                cleaned_stats[key] = value
+            cleaned_data[name] = cleaned_stats
+        return cleaned_data
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+    except ValueError:
+        print(f"Error: Invalid JSON data from API.")
+
 def print_json_from_api(url):
     try:
         response = requests.get(url)
@@ -35,10 +58,10 @@ def read_json_file(filename):
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON data in file '{filename}'.")
 
-def calculate_composite_score(player_data):
+def calculate_composite_score_OLD(player_data):
     return sum([
-        player_data['KDR'],
-        player_data['aKDR'],
+        player_data['kdr'],
+        player_data['akdr'],
         player_data['alltime_kdr'],
         player_data['year_kdr'],
         player_data['last90_kdr'],
@@ -48,10 +71,64 @@ def calculate_composite_score(player_data):
         player_data['tier'] == 'West1: Master'
     ]) / 9.0
 
+def calculate_composite_score(player_data):
+    # Get player data into variables
+    kdr = player_data.get('kdr', 0)
+    print(f"kdr: {kdr}")
+    akdr = player_data.get('akdr', 0)
+    print(f"akdr: {akdr}")
+    alltime_kdr = player_data.get('alltime_kdr', 0)
+    print(f"alltime_kdr: {alltime_kdr}")
+    year_kdr = player_data.get('year_kdr', 0)
+    print(f"year_kdr: {year_kdr}")
+    last90_kdr = player_data.get('last90_kdr', 0)
+    print(f"last90_kdr: {last90_kdr}")
+    kills = player_data.get('kills', 0)
+    print(f"kills: {kills}")
+    deaths = player_data.get('deaths', 0)
+    print(f"deaths: {deaths}")
+    assists = player_data.get('assists', 0)
+    print(f"assists: {assists}")
+    tier = player_data.get('tier', '')
+    print(f"tier: {tier}")
+
+    # Check types and replace None with 0
+    if not isinstance(kdr, (int, float)):
+        kdr = 0
+    if not isinstance(akdr, (int, float)):
+        akdr = 0
+    if not isinstance(alltime_kdr, (int, float)):
+        alltime_kdr = 0
+    if not isinstance(year_kdr, (int, float)):
+        year_kdr = 0
+    if not isinstance(last90_kdr, (int, float)):
+        last90_kdr = 0
+    if not isinstance(kills, (int, float)):
+        kills = 0
+    if not isinstance(deaths, (int, float)):
+        deaths = 0
+    if not isinstance(assists, (int, float)):
+        assists = 0
+
+    # Calculate composite score
+    return sum([
+        kdr,
+        akdr,
+        alltime_kdr,
+        year_kdr,
+        last90_kdr,
+        kills / (deaths + 1),
+        assists / (deaths + 1),
+        kills / (assists + 1),
+        tier == 'West1: Master'
+    ]) / 9.0
+
+
 def create_teams_plusminus(data, threshold):
     # Calculate composite score for each player
     scores = []
     for player in data:
+        print(f"Player: {player[0]}")
         composite_score = calculate_composite_score(player)
         scores.append((player['player'], composite_score))
     
@@ -146,10 +223,17 @@ def print_top_teams(teams):
         print()
 
 def main():
+    #statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31"
+    statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-07-01&end_date=2023-07-07"
+
+    #print_json_from_api(statsURL)
+
     print("\nGEEKFEST GEEK BALANCER\n")
     # Read JSON data from file
-    data = read_json_file('summer_stats.json')
-
+    #data = read_json_file('summer_stats.json')
+    data = get_json_from_api_clean(statsURL)
+    #data = read_json_file('test.json')
+    
     if data is None:
         return
 
@@ -164,26 +248,9 @@ def main():
         print("Cannot balance teams with the given threshold and maximum number of attempts.")
         return
 
-    # Print team data
-    #for i, (team_a, team_b) in enumerate(teams):
-    #    print(f"\nTeam {i+1}:")
-    #    print("Team A:")
-    #    for player, score in team_a:
-    #        print(f"{player}: {score:.4f}")
-    #    print(f"Total players: {len(team_a)}")
-    #    print(f"Aggregate score: {sum([score for _, score in team_a]):.4f}")
-    #
-    #    print("\nTeam B:")
-    #    for player, score in team_b:
-    #        print(f"{player}: {score:.4f}")
-    #    print(f"Total players: {len(team_b)}")
-    #    print(f"Aggregate score: {sum([score for _, score in team_b]):.4f}")
-
     # Print top teams
     print_top_teams(teams)
 
-    get_json_from_api("http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31")
-    print_json_from_api("http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31")
 
 if __name__ == '__main__':
     main()
