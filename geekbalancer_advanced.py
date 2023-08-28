@@ -1,6 +1,29 @@
 import json
 import itertools
 import random
+import requests
+
+def get_json_from_api(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        return data
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+    except ValueError:
+        print(f"Error: Invalid JSON data from API.")
+
+def print_json_from_api(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        print(data)
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+    except ValueError:
+        print(f"Error: Invalid JSON data from API.")
 
 def read_json_file(filename):
     try:
@@ -114,10 +137,10 @@ def print_top_teams(teams):
         print(f"Team A score   : {team_a_score:.4f}")
         print(f"Team B score   : {team_b_score:.4f}")
         print(f"Difference     : {abs(team_a_score - team_b_score):.4f}")
-        print("\nTeam A players:")
+        print(f"\nTeam A players : {len(team_a)}")
         for name, score in sorted(team_a, key=lambda x: x[1], reverse=True):
             print(f" - {name} ({score:.4f})")
-        print("\nTeam B players:")
+        print(f"\nTeam B players : {len(team_b)}")
         for name, score in sorted(team_b, key=lambda x: x[1], reverse=True):
             print(f" - {name} ({score:.4f})")
         print()
@@ -158,6 +181,9 @@ def main():
 
     # Print top teams
     print_top_teams(teams)
+
+    get_json_from_api("http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31")
+    print_json_from_api("http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31")
 
 if __name__ == '__main__':
     main()
