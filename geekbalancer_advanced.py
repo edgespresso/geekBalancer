@@ -209,6 +209,17 @@ def main():
     if data is None:
         return
 
+    player_names = ['Edge', 'Unthink', 'Nuticles', 'Warrior', 'Toze', 'DeathEngine']
+
+    # Filter data to only include specified players
+    for player in data:
+        if player['player'] in player_names:
+            print(player['player'])
+
+    # Filter data to only include specified players
+    data = [player for player in data if player['player'] in player_names]
+    print(data)
+
     # Balance teams
     teams = balance_teams(data, threshold)
 
