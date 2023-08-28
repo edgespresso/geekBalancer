@@ -14,40 +14,21 @@ def get_json_from_api(url):
     except ValueError:
         print(f"Error: Invalid JSON data from API.")
 
-def get_json_from_api_clean(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        cleaned_data = {}
-        for player in data:
-            name = player['player_name']
-            stats = player['stats']
-            cleaned_stats = {}
-            for key, value in stats.items():
-                if isinstance(value, str):
-                    value = value.strip()
-                if value == '':
-                    value = None
-                cleaned_stats[key] = value
-            cleaned_data[name] = cleaned_stats
-        return cleaned_data
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-    except ValueError:
-        print(f"Error: Invalid JSON data from API.")
 
-def print_json_from_api(url):
+def write_json_file(filename, data):
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        print(data)
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-    except ValueError:
-        print(f"Error: Invalid JSON data from API.")
+        # Parse JSON object from string
+        parsed_data = json.loads(data)
 
+        # Write parsed JSON object to file
+        with open(filename, 'w') as f:
+            json.dump(parsed_data, f, indent=4)
+        print(f"JSON data written to file '{filename}'.")
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON data in file '{filename}'.")
+    except IOError:
+        print(f"Error: Failed to write JSON data to file '{filename}'.")
+    
 def read_json_file(filename):
     try:
         with open(filename) as f:
@@ -58,39 +39,17 @@ def read_json_file(filename):
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON data in file '{filename}'.")
 
-def calculate_composite_score_OLD(player_data):
-    return sum([
-        player_data['kdr'],
-        player_data['akdr'],
-        player_data['alltime_kdr'],
-        player_data['year_kdr'],
-        player_data['last90_kdr'],
-        player_data['kills'] / (player_data['deaths'] + 1),
-        player_data['assists'] / (player_data['deaths'] + 1),
-        player_data['kills'] / (player_data['assists'] + 1),
-        player_data['tier'] == 'West1: Master'
-    ]) / 9.0
-
 def calculate_composite_score(player_data):
     # Get player data into variables
     kdr = player_data.get('kdr', 0)
-    print(f"kdr: {kdr}")
     akdr = player_data.get('akdr', 0)
-    print(f"akdr: {akdr}")
     alltime_kdr = player_data.get('alltime_kdr', 0)
-    print(f"alltime_kdr: {alltime_kdr}")
     year_kdr = player_data.get('year_kdr', 0)
-    print(f"year_kdr: {year_kdr}")
     last90_kdr = player_data.get('last90_kdr', 0)
-    print(f"last90_kdr: {last90_kdr}")
     kills = player_data.get('kills', 0)
-    print(f"kills: {kills}")
     deaths = player_data.get('deaths', 0)
-    print(f"deaths: {deaths}")
     assists = player_data.get('assists', 0)
-    print(f"assists: {assists}")
     tier = player_data.get('tier', '')
-    print(f"tier: {tier}")
 
     # Check types and replace None with 0
     if not isinstance(kdr, (int, float)):
@@ -123,12 +82,10 @@ def calculate_composite_score(player_data):
         tier == 'West1: Master'
     ]) / 9.0
 
-
 def create_teams_plusminus(data, threshold):
     # Calculate composite score for each player
     scores = []
     for player in data:
-        print(f"Player: {player[0]}")
         composite_score = calculate_composite_score(player)
         scores.append((player['player'], composite_score))
     
@@ -200,7 +157,6 @@ def balance_teams(data, threshold, max_attempts=1):
         print(f"Cannot generate new team permutations with the given threshold ({threshold:.4f}).")
         return teams[0]
 
-    print(f"Total attempts: {attempts}")
     return new_teams
 
 def print_top_teams(teams):
@@ -223,22 +179,25 @@ def print_top_teams(teams):
         print()
 
 def main():
-    #statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31"
-    statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-07-01&end_date=2023-07-07"
+    # Set threshold
+    threshold = 1.0
 
-    #print_json_from_api(statsURL)
+    statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31"
+    #statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-07-01&end_date=2023-07-07"
 
     print("\nGEEKFEST GEEK BALANCER\n")
+    
     # Read JSON data from file
-    #data = read_json_file('summer_stats.json')
-    data = get_json_from_api_clean(statsURL)
-    #data = read_json_file('test.json')
+    data_temp = get_json_from_api(statsURL)
+
+    # Write FIXED JSON data to file
+    write_json_file('stats.json', data_temp)
+    
+    # Read the fixed JSON file and start balance
+    data = read_json_file('stats.json')
     
     if data is None:
         return
-
-    # Set threshold
-    threshold = 1.0
 
     # Balance teams
     teams = balance_teams(data, threshold)
@@ -250,7 +209,6 @@ def main():
 
     # Print top teams
     print_top_teams(teams)
-
 
 if __name__ == '__main__':
     main()
