@@ -179,14 +179,87 @@ def print_top_teams(teams):
             print(f" - {name} ({score:.4f})")
         print()
 
+def rebalance_teams(team_a, team_b, new_players):
+    # Create dictionary of all players
+    all_players_scores = dict(team_a + team_b)
+
+    # Add new players to dictionary
+    all_players_scores.update(new_players)
+
+    # Sort dictionary by score in descending order
+    sorted_players = sorted(all_players_scores.items(), key=lambda x: x[1], reverse=True)
+
+    # Assign top half of dictionary to team A and bottom half to team B
+    team_a = sorted_players[:len(sorted_players)//2]
+    team_b = sorted_players[len(sorted_players)//2:]
+
+    # Calculate total score and number of players for each team
+    team_a_score = sum(score for name, score in team_a)
+    team_a_players = len(team_a)
+    team_b_score = sum(score for name, score in team_b)
+    team_b_players = len(team_b)
+
+    # Return updated teams, total score, and number of players
+    return team_a, team_b, team_a_score, team_a_players, team_b_score, team_b_players
+
+def rebalance_teams_new(team_a, team_b, new_players, player_data):
+    # Create dictionary of all players and their composite scores
+    all_players_scores = {}
+    for player in player_data:
+        name = player["player"]
+        kills = player["kills"]
+        deaths = player["deaths"]
+        assists = player["assists"]
+        score = (kills + assists) / (deaths + 1)
+        all_players_scores[name] = score
+
+    # Filter data to only include new players
+    new_players_data = [player for player in player_data if player['player'] in new_players]
+
+    # Calculate composite scores for new players and add to dictionary
+    for player in new_players_data:
+        name = player["player"]
+        kills = player["kills"]
+        deaths = player["deaths"]
+        assists = player["assists"]
+        score = (kills + assists) / (deaths + 1)
+        all_players_scores[name] = score
+
+    # Update scores for existing players in team A and team B
+    for i, player in enumerate(team_a):
+        name = player[0]
+        if name in all_players_scores:
+            team_a[i] = (name, all_players_scores[name])
+    for i, player in enumerate(team_b):
+        name = player[0]
+        if name in all_players_scores:
+            team_b[i] = (name, all_players_scores[name])
+
+    # Sort dictionary by score in descending order
+    sorted_players = sorted(all_players_scores.items(), key=lambda x: x[1], reverse=True)
+
+    # Assign top half of dictionary to team A and bottom half to team B
+    team_a = sorted_players[:len(sorted_players)//2]
+    team_b = sorted_players[len(sorted_players)//2:]
+
+    # Calculate total score and number of players for each team
+    team_a_score = sum(score for name, score in team_a)
+    team_a_players = len(team_a)
+    team_b_score = sum(score for name, score in team_b)
+    team_b_players = len(team_b)
+
+    # Return updated teams, total score, and number of players
+    return team_a, team_b, team_a_score, team_a_players, team_b_score, team_b_players
+    
+
 def main():
     # Set threshold
     threshold = 1.0
 
     # Set parameters for the API call
     base_url = "http://stats.geekfestclan.com/api/stats/playerstats/"
-    start_date = "2023-07-01"
-    end_date = "2023-07-07"
+    start_date = "2023-02-28"
+    end_date = "2023-08-30"
     api_string = create_api_string(base_url, start_date, end_date)
     statsURL = api_string
 
@@ -209,16 +282,16 @@ def main():
     if data is None:
         return
 
-    player_names = ['Edge', 'Unthink', 'Nuticles', 'Warrior', 'Toze', 'DeathEngine']
+#    player_names = ['Edge', 'Unthink', 'Nuticles', 'Warrior', 'Toze', 'DeathEngine']
 
-    # Filter data to only include specified players
-    for player in data:
-        if player['player'] in player_names:
-            print(player['player'])
+#    # Filter data to only include specified players
+#    for player in data:
+#        if player['player'] in player_names:
+#            print(player['player'])
 
-    # Filter data to only include specified players
-    data = [player for player in data if player['player'] in player_names]
-    print(data)
+#    # Filter data to only include specified players
+#    data = [player for player in data if player['player'] in player_names]
+#    print(data)
 
     # Balance teams
     teams = balance_teams(data, threshold)
@@ -230,6 +303,33 @@ def main():
 
     # Print top teams
     print_top_teams(teams)
+
+    # Set up initial teams
+    team_a = ["Cloner", "Red", "Kurevan", "Edge", "PizzaDestiny", "Toze", "Mailboxhead", "curt0012"]
+    team_b = ["Dream", "Unthink", "CapturedCapt", "KamikazeGeek", "GalacTHICC", "DeathEngine", "Yakobay", "Illygimp"]
+
+    # Filter data to only include specified players
+    #data = [player for player in data if player['player'] in team_a]
+    #print(data)
+
+    # Get new players and their scores
+    new_players = {"The Salty Spittoon": 0, "Nuticles": 0, "Rambo8079": 0}
+
+    # Rebalance teams
+    updated_team_a, updated_team_b, team_a_score, team_a_players, team_b_score, team_b_players = rebalance_teams_new(team_a, team_b, new_players, data)
+
+    # Print updated teams and stats
+    print("\nUpdated team A:")
+    for name, score in updated_team_a:
+        print(f" - {name} ({score:.4f})")
+    print(f"Total score: {team_a_score:.4f}")
+    print(f"Number of players: {team_a_players}")
+
+    print("\nUpdated team B:")
+    for name, score in updated_team_b:
+        print(f" - {name} ({score:.4f})")
+    print(f"Total score: {team_b_score:.4f}")
+    print(f"Number of players: {team_b_players}")
 
 if __name__ == '__main__':
     main()
