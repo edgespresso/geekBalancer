@@ -1,5 +1,6 @@
 import json
 import requests
+from flask import Flask, request, jsonify
 
 def create_api_string(base_url, start_date, end_date):
     api_string = f"{base_url}?start_date={start_date}&end_date={end_date}"
@@ -38,6 +39,15 @@ def read_json_file(filename):
         print(f"Error: File '{filename}' not found.")
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON data in file '{filename}'.")
+
+def filter_player_stats(data, players):
+    filtered_data = []
+    for player in players:
+        for item in data:
+            if item['player'] == player:
+                filtered_data.append(item)
+                break
+    return filtered_data
 
 def calculate_composite_score(player_data):
     # Get player data into variables
@@ -248,5 +258,77 @@ def main():
     # Print top teams
     print_top_teams(teams, 5)
 
+    # Filter data for specific players
+    players = ['Edge', 'Mailboxhead', 'Dream']
+    filtered_data = filter_player_stats(data, players)
+    print(filtered_data)
+
+    # Balance teams
+    teams = balance_teams(filtered_data, threshold)
+
+    # Check if teams are balanced
+    if len(teams) == 0:
+        print("Cannot balance teams with the given threshold and maximum number of attempts.")
+        return
+    print_top_teams(teams, 5)
+
+import json
+
+def create_team_json(team, team_name, team_score):
+    team_json = {
+        'team_name': team_name,
+        'team_score': team_score,
+        'team_num_players': len(team),
+        'players': {}
+    }
+    for i, (name, score) in enumerate(team, start=1):
+        player_json = {
+            'player_name': name,
+            'player_score': score
+        }
+        team_json['players'][i] = player_json
+    return team_json
+
+def get_top_teams(teams, max_teams=10):
+    sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
+    top_teams = {}
+    for i, (team_a, team_b) in enumerate(sorted_teams[:max_teams], start=1):
+        team_a_score = sum([score for _, score in team_a])
+        team_b_score = sum([score for _, score in team_b])
+        team_a_json = create_team_json(team_a, 'Alpha', team_a_score)
+        team_b_json = create_team_json(team_b, 'Bravo', team_b_score)
+        top_teams[f'option_{i}'] = {'team': [team_a_json, team_b_json]}
+    print(json.dumps(top_teams, indent=4))
+
+app = Flask(__name__)
+
+# Set threshold
+threshold = 3.0
+
+# Read the fixed JSON file and start balance
+data = read_json_file('stats.json')
+
+@app.route('/balance', methods=['POST'])
+def balance_teams_api():
+    # Get the list of players from the JSON payload
+    players = request.json['players']
+
+    # Filter data for specific players
+    filtered_data = filter_player_stats(data, players)
+
+    # Balance teams
+    teams = balance_teams(filtered_data, threshold)
+
+    # Check if teams are balanced
+    if len(teams) == 0:
+        return jsonify({'error': 'Cannot balance teams with the given threshold and maximum number of attempts.'}), 400
+
+    # Return the top teams as JSON
+    top_teams = get_top_teams(teams, 5)
+    return jsonify(top_teams)
+
 if __name__ == '__main__':
-    main()
+    app.run(debug=True)
+
+#if __name__ == '__main__':
+#    main()
