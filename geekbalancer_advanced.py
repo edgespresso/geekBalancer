@@ -289,6 +289,34 @@ def create_team_json(team, team_name, team_score):
         team_json['players'][i] = player_json
     return team_json
 
+def create_team_json_list(team, team_name, team_score):
+    players = []
+    for name, score in team:
+        player = {
+            'player_name': name,
+            'player_score': round(score, 4)
+        }
+        players.append(player)
+    team_json = {
+        'team_name': team_name,
+        'team_score': round(team_score, 10),
+        'team_num_players': len(team),
+        'players': players
+    }
+    return team_json
+
+def get_top_teams_list(teams, max_teams=10):
+    sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
+    top_teams = []
+    for team_a, team_b in sorted_teams[:max_teams]:
+        team_a_score = sum([score for _, score in team_a])
+        team_b_score = sum([score for _, score in team_b])
+        team_a_json = create_team_json(team_a, 'Alpha', team_a_score)
+        team_b_json = create_team_json(team_b, 'Bravo', team_b_score)
+        top_teams.append(team_a_json)
+        top_teams.append(team_b_json)
+    print(json.dumps(top_teams, indent=4))
+
 def get_top_teams(teams, max_teams=10):
     sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
     top_teams = {}
@@ -324,7 +352,7 @@ def balance_teams_api():
         return jsonify({'error': 'Cannot balance teams with the given threshold and maximum number of attempts.'}), 400
 
     # Return the top teams as JSON
-    top_teams = get_top_teams(teams, 5)
+    top_teams = get_top_teams_list(teams, 5)
     return jsonify(top_teams)
 
 if __name__ == '__main__':

@@ -33,3 +33,6 @@ Then it will restrict the player based on the CFG file (ie, ggg_restrict STEAM_1
 The user will be able to buy the awp, in this instance, but it will be immediately dropped and that player wont be able to pick it up
 
 ======================
+
+
+curl -X POST -H "Content-Type: application/json" -d '{"players": ["Edge", "Mailboxhead", "Dream", "Unthink", "Duckhead", "Yakobay", "Ogre", "Cloner", "Toze"]}' http://localhost:5000/balance
