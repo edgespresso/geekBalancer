@@ -271,10 +271,10 @@ def main():
     print(f"End Date   : {end_date}")
 
     # Read JSON data from file
-    data_temp = get_json_from_api(statsURL)
+    #data_temp = get_json_from_api(statsURL)
 
     # Write FIXED JSON data to file
-    write_json_file('stats.json', data_temp)
+    #write_json_file('stats.json', data_temp)
     
     # Read the fixed JSON file and start balance
     data = read_json_file('stats.json')
@@ -305,31 +305,31 @@ def main():
     print_top_teams(teams)
 
     # Set up initial teams
-    team_a = ["Cloner", "Red", "Kurevan", "Edge", "PizzaDestiny", "Toze", "Mailboxhead", "curt0012"]
-    team_b = ["Dream", "Unthink", "CapturedCapt", "KamikazeGeek", "GalacTHICC", "DeathEngine", "Yakobay", "Illygimp"]
+    #team_a = ["Cloner", "Red", "Kurevan", "Edge", "PizzaDestiny", "Toze", "Mailboxhead", "curt0012"]
+    #team_b = ["Dream", "Unthink", "CapturedCapt", "KamikazeGeek", "GalacTHICC", "DeathEngine", "Yakobay", "Illygimp"]
 
     # Filter data to only include specified players
     #data = [player for player in data if player['player'] in team_a]
     #print(data)
 
     # Get new players and their scores
-    new_players = {"The Salty Spittoon": 0, "Nuticles": 0, "Rambo8079": 0}
+    #new_players = {"The Salty Spittoon": 0, "Nuticles": 0, "Rambo8079": 0}
 
     # Rebalance teams
-    updated_team_a, updated_team_b, team_a_score, team_a_players, team_b_score, team_b_players = rebalance_teams_new(team_a, team_b, new_players, data)
+    #updated_team_a, updated_team_b, team_a_score, team_a_players, team_b_score, team_b_players = rebalance_teams_new(team_a, team_b, new_players, data)
 
     # Print updated teams and stats
-    print("\nUpdated team A:")
-    for name, score in updated_team_a:
-        print(f" - {name} ({score:.4f})")
-    print(f"Total score: {team_a_score:.4f}")
-    print(f"Number of players: {team_a_players}")
+    #print("\nUpdated team A:")
+    #for name, score in updated_team_a:
+    #    print(f" - {name} ({score:.4f})")
+    #print(f"Total score: {team_a_score:.4f}")
+    #print(f"Number of players: {team_a_players}")
 
-    print("\nUpdated team B:")
-    for name, score in updated_team_b:
-        print(f" - {name} ({score:.4f})")
-    print(f"Total score: {team_b_score:.4f}")
-    print(f"Number of players: {team_b_players}")
+    #print("\nUpdated team B:")
+    #for name, score in updated_team_b:
+    #    print(f" - {name} ({score:.4f})")
+    #print(f"Total score: {team_b_score:.4f}")
+    #print(f"Number of players: {team_b_players}")
 
 if __name__ == '__main__':
     main()
