@@ -119,6 +119,35 @@ def create_teams_plusminus(data, threshold):
 
     return team_a, team_b
 
+def create_teams_plusminus_new(data, threshold):
+    # Calculate composite score for each player
+    scores = []
+    for player in data:
+        composite_score = calculate_composite_score(player)
+        scores.append((player['player'], composite_score))
+    
+    # Sort players by composite score
+    scores.sort(key=lambda x: x[1], reverse=True)
+
+    # Assign players to teams
+    team_a = []
+    team_b = []
+    for i, (player, score) in enumerate(scores):
+        if i % 2 == 0:
+            team_a.append((player, score))
+        else:
+            team_b.append((player, score))
+
+    # Check if teams are balanced
+    while abs(len(team_a) - len(team_b)) > 1:
+        if len(team_a) > len(team_b):
+            player, score = team_a.pop()
+            team_b.append((player, score))
+        else:
+            player, score = team_b.pop()
+            team_a.append((player, score))
+
+    return team_a, team_b
 
 def balance_teams(data, threshold, max_attempts=1):
     teams = []
@@ -126,7 +155,7 @@ def balance_teams(data, threshold, max_attempts=1):
     while len(teams) < 5 and attempts < max_attempts:
         attempts += 1
         # Create teams
-        team_a, team_b = create_teams_plusminus(data, threshold)
+        team_a, team_b = create_teams_plusminus_new(data, threshold)
 
         # Check if teams are balanced
         team_a_score = sum([score for _, score in team_a])
@@ -159,10 +188,10 @@ def balance_teams(data, threshold, max_attempts=1):
 
     return new_teams
 
-def print_top_teams(teams):
+def print_top_teams(teams, max_teams=10):
     sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
-    print("\nTop 10 Team Configurations - Sorted by Score Differential\n")
-    for i, (team_a, team_b) in enumerate(sorted_teams[:10]):
+    print(f"\nTop {max_teams} Team Configurations - Sorted by Score Differential\n")
+    for i, (team_a, team_b) in enumerate(sorted_teams[:max_teams]):
         team_a_score = sum([score for _, score in team_a])
         team_b_score = sum([score for _, score in team_b])
         print("=========================================================")
@@ -180,7 +209,7 @@ def print_top_teams(teams):
 
 def main():
     # Set threshold
-    threshold = 1.0
+    threshold = 3.0
 
     # Set parameters for the API call
     base_url = "http://stats.geekfestclan.com/api/stats/playerstats/"
@@ -217,7 +246,7 @@ def main():
         return
 
     # Print top teams
-    print_top_teams(teams)
+    print_top_teams(teams, 5)
 
 if __name__ == '__main__':
     main()
