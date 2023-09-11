@@ -320,7 +320,7 @@ def create_team_json_list(team, team_name, team_score):
     }
     return team_json
 
-def get_top_teams_list(teams, max_teams=10):
+def get_top_teams_list_old(teams, max_teams=10):
     sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
     top_teams = []
     for team_a, team_b in sorted_teams[:max_teams]:
@@ -330,8 +330,22 @@ def get_top_teams_list(teams, max_teams=10):
         team_b_json = create_team_json_list(team_b, 'Bravo', team_b_score)
         top_teams.append(team_a_json)
         top_teams.append(team_b_json)
+    with open("teams.json", 'w') as f:
+        json.dump(top_teams, f, indent=4)
     print(json.dumps(top_teams, indent=4))
 
+def get_top_teams_list(teams, max_teams=10, output_file='top_teams.json'):
+    sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
+    top_teams = []
+    for team_a, team_b in sorted_teams[:max_teams]:
+        team_a_score = sum([score for _, score in team_a])
+        team_b_score = sum([score for _, score in team_b])
+        team_a_json = create_team_json_list(team_a, 'Alpha', team_a_score)
+        team_b_json = create_team_json_list(team_b, 'Bravo', team_b_score)
+        top_teams.append({'team_a': team_a_json, 'team_b': team_b_json})
+    with open(output_file, 'w') as f:
+        json.dump(top_teams, f, indent=4)
+    print(json.dumps(top_teams, indent=4))
 
 ###################################################################################################
 
@@ -361,6 +375,7 @@ def balance_teams_api():
 
     # Return the top teams as JSON
     top_teams = get_top_teams_list(teams, 5)
+
     return jsonify(top_teams)
 
 if __name__ == '__main__':
