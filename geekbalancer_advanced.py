@@ -1,6 +1,6 @@
 import  json
 import  requests
-from    flask import Flask, request, jsonify
+from    flask import Flask, request, jsonify, Response
 
 def create_api_string(base_url, start_date, end_date):
     """
@@ -346,6 +346,7 @@ def get_top_teams_list(teams, max_teams=10, output_file='top_teams.json'):
     with open(output_file, 'w') as f:
         json.dump(top_teams, f, indent=4)
     print(json.dumps(top_teams, indent=4))
+    return(top_teams)
 
 ###################################################################################################
 
@@ -375,6 +376,15 @@ def balance_teams_api():
 
     # Return the top teams as JSON
     top_teams = get_top_teams_list(teams, 5)
+
+#    # Serialize the response data to JSON format
+#    response_data = json.dumps(top_teams)
+
+#    # Set the Content-Type header to indicate that the response is in JSON format
+#    headers = {'Content-Type': 'application/json'}
+
+#    # Return the JSON response with the appropriate headers
+#    return Response(response_data, headers=headers)
 
     return jsonify(top_teams)
 
