@@ -1,12 +1,36 @@
-import json
-import requests
-from flask import Flask, request, jsonify
+import  json
+import  requests
+from    flask import Flask, request, jsonify
 
 def create_api_string(base_url, start_date, end_date):
+    """
+    Creates an API string using the given base URL, start date, and end date.
+
+    Args:
+        base_url (str): The base URL for the API.
+        start_date (str): The start date for the API query.
+        end_date (str): The end date for the API query.
+
+    Returns:
+        str: The API string with the start and end dates included.
+    """
     api_string = f"{base_url}?start_date={start_date}&end_date={end_date}"
     return api_string
 
 def get_json_from_api(url):
+    """
+    Sends a GET request to the specified URL and returns the JSON data.
+
+    Args:
+        url (str): The URL to send the GET request to.
+
+    Returns:
+        dict: The JSON data returned from the API.
+
+    Raises:
+        requests.exceptions.RequestException: If an error occurs while sending the GET request.
+        ValueError: If the JSON data returned from the API is invalid.
+    """
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -18,6 +42,17 @@ def get_json_from_api(url):
         print(f"Error: Invalid JSON data from API.")
 
 def write_json_file(filename, data):
+    """
+    Writes a JSON object to a file.
+
+    Args:
+        filename (str): The name of the file to write to.
+        data (str): The JSON object to write to the file.
+
+    Raises:
+        json.JSONDecodeError: If the data is not a valid JSON object.
+        IOError: If there is an error writing the data to the file.
+    """
     try:
         # Parse JSON object from string
         parsed_data = json.loads(data)
@@ -31,6 +66,19 @@ def write_json_file(filename, data):
         print(f"Error: Failed to write JSON data to file '{filename}'.")
     
 def read_json_file(filename):
+    """
+    Reads a JSON file and returns its contents as a Python object.
+
+    Args:
+        filename (str): The path to the JSON file.
+
+    Returns:
+        dict: A dictionary containing the contents of the JSON file.
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist.
+        json.JSONDecodeError: If the specified file contains invalid JSON data.
+    """
     try:
         with open(filename) as f:
             data = json.load(f)
@@ -41,6 +89,16 @@ def read_json_file(filename):
         print(f"Error: Invalid JSON data in file '{filename}'.")
 
 def filter_player_stats(data, players):
+    """
+    Filters the given data to only include stats for the specified players.
+
+    Args:
+        data (list): A list of dictionaries containing player stats.
+        players (list): A list of player names to filter the data for.
+
+    Returns:
+        list: A list of dictionaries containing stats for the specified players.
+    """
     filtered_data = []
     for player in players:
         for item in data:
@@ -50,16 +108,34 @@ def filter_player_stats(data, players):
     return filtered_data
 
 def calculate_composite_score(player_data):
+    """
+    Calculates the composite score for a player based on their performance data.
+
+    Args:
+        player_data (dict): A dictionary containing the player's performance data, including:
+            - kdr (float): Kill-death ratio.
+            - akdr (float): Asist-kill-death ratio.
+            - alltime_kdr (float): All-time kill-death ratio.
+            - year_kdr (float): Yearly kill-death ratio.
+            - last90_kdr (float): Kill-death ratio for the last 90 days.
+            - kills (int): Total number of kills.
+            - deaths (int): Total number of deaths.
+            - assists (int): Total number of assists.
+            - tier (str): The player's tier.
+
+    Returns:
+        float: The composite score for the player.
+    """
     # Get player data into variables
-    kdr = player_data.get('kdr', 0)
-    akdr = player_data.get('akdr', 0)
+    kdr         = player_data.get('kdr', 0)
+    akdr        = player_data.get('akdr', 0)
     alltime_kdr = player_data.get('alltime_kdr', 0)
-    year_kdr = player_data.get('year_kdr', 0)
-    last90_kdr = player_data.get('last90_kdr', 0)
-    kills = player_data.get('kills', 0)
-    deaths = player_data.get('deaths', 0)
-    assists = player_data.get('assists', 0)
-    tier = player_data.get('tier', '')
+    year_kdr    = player_data.get('year_kdr', 0)
+    last90_kdr  = player_data.get('last90_kdr', 0)
+    kills       = player_data.get('kills', 0)
+    deaths      = player_data.get('deaths', 0)
+    assists     = player_data.get('assists', 0)
+    tier        = player_data.get('tier', '')
 
     # Check types and replace None with 0
     if not isinstance(kdr, (int, float)):
@@ -92,44 +168,17 @@ def calculate_composite_score(player_data):
         tier == 'West1: Master'
     ]) / 9.0
 
-def create_teams_plusminus(data, threshold):
-    # Calculate composite score for each player
-    scores = []
-    for player in data:
-        composite_score = calculate_composite_score(player)
-        scores.append((player['player'], composite_score))
-    
-    # Sort players by composite score
-    scores.sort(key=lambda x: x[1], reverse=True)
+def assign_players(data, threshold):
+    """
+    Assigns players to two teams based on their composite score, ensuring that the teams are balanced.
 
-    # Assign players to teams
-    team_a = []
-    team_b = []
-    for i, (player, score) in enumerate(scores):
-        if i % 2 == 0:
-            team_a.append((player, score))
-        else:
-            team_b.append((player, score))
+    Args:
+        data (list): A list of player dictionaries, where each dictionary contains the player's name and stats.
+        threshold (float): The minimum composite score required for a player to be considered for team assignment.
 
-    # Check if teams are balanced
-    team_a_score = sum([score for _, score in team_a])
-    team_b_score = sum([score for _, score in team_b])
-    while abs(team_a_score - team_b_score) > threshold:
-        # Swap players between teams
-        if team_a_score > team_b_score:
-            player, score = team_a.pop()
-            team_b.append((player, score))
-        else:
-            player, score = team_b.pop()
-            team_a.append((player, score))
-
-        # Recalculate team scores
-        team_a_score = sum([score for _, score in team_a])
-        team_b_score = sum([score for _, score in team_b])
-
-    return team_a, team_b
-
-def create_teams_plusminus_new(data, threshold):
+    Returns:
+        tuple: A tuple containing two lists of player tuples, where each player tuple contains the player's name and composite score.
+    """
     # Calculate composite score for each player
     scores = []
     for player in data:
@@ -165,7 +214,7 @@ def balance_teams(data, threshold, max_attempts=1):
     while len(teams) < 5 and attempts < max_attempts:
         attempts += 1
         # Create teams
-        team_a, team_b = create_teams_plusminus_new(data, threshold)
+        team_a, team_b = assign_players(data, threshold)
 
         # Check if teams are balanced
         team_a_score = sum([score for _, score in team_a])
@@ -217,19 +266,16 @@ def print_top_teams(teams, max_teams=10):
             print(f" - {name} ({score:.4f})")
         print()
 
-def main():
+def local_balance():
     # Set threshold
     threshold = 3.0
 
     # Set parameters for the API call
-    base_url = "http://stats.geekfestclan.com/api/stats/playerstats/"
-    start_date = "2023-02-28"
-    end_date = "2023-08-30"
-    api_string = create_api_string(base_url, start_date, end_date)
-    statsURL = api_string
-
-    #statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-01-01&end_date=2023-01-31"
-    #statsURL = "http://stats.geekfestclan.com/api/stats/playerstats/?start_date=2023-07-01&end_date=2023-07-07"
+    base_url    = "http://stats.geekfestclan.com/api/stats/playerstats/"
+    start_date  = "2023-02-28"
+    end_date    = "2023-08-30"
+    api_string  = create_api_string(base_url, start_date, end_date)
+    statsURL    = api_string
 
     print("\nGEEKFEST GEEK BALANCER\n")
     print(f"Start Date : {start_date}")
@@ -258,37 +304,6 @@ def main():
     # Print top teams
     print_top_teams(teams, 5)
 
-    # Filter data for specific players
-    players = ['Edge', 'Mailboxhead', 'Dream']
-    filtered_data = filter_player_stats(data, players)
-    print(filtered_data)
-
-    # Balance teams
-    teams = balance_teams(filtered_data, threshold)
-
-    # Check if teams are balanced
-    if len(teams) == 0:
-        print("Cannot balance teams with the given threshold and maximum number of attempts.")
-        return
-    print_top_teams(teams, 5)
-
-import json
-
-def create_team_json(team, team_name, team_score):
-    team_json = {
-        'team_name': team_name,
-        'team_score': team_score,
-        'team_num_players': len(team),
-        'players': {}
-    }
-    for i, (name, score) in enumerate(team, start=1):
-        player_json = {
-            'player_name': name,
-            'player_score': score
-        }
-        team_json['players'][i] = player_json
-    return team_json
-
 def create_team_json_list(team, team_name, team_score):
     players = []
     for name, score in team:
@@ -311,32 +326,25 @@ def get_top_teams_list(teams, max_teams=10):
     for team_a, team_b in sorted_teams[:max_teams]:
         team_a_score = sum([score for _, score in team_a])
         team_b_score = sum([score for _, score in team_b])
-        team_a_json = create_team_json(team_a, 'Alpha', team_a_score)
-        team_b_json = create_team_json(team_b, 'Bravo', team_b_score)
+        team_a_json = create_team_json_list(team_a, 'Alpha', team_a_score)
+        team_b_json = create_team_json_list(team_b, 'Bravo', team_b_score)
         top_teams.append(team_a_json)
         top_teams.append(team_b_json)
     print(json.dumps(top_teams, indent=4))
 
-def get_top_teams(teams, max_teams=10):
-    sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
-    top_teams = {}
-    for i, (team_a, team_b) in enumerate(sorted_teams[:max_teams], start=1):
-        team_a_score = sum([score for _, score in team_a])
-        team_b_score = sum([score for _, score in team_b])
-        team_a_json = create_team_json(team_a, 'Alpha', team_a_score)
-        team_b_json = create_team_json(team_b, 'Bravo', team_b_score)
-        top_teams[f'option_{i}'] = {'team': [team_a_json, team_b_json]}
-    print(json.dumps(top_teams, indent=4))
+
+###################################################################################################
 
 app = Flask(__name__)
 
 # Set threshold
-threshold = 3.0
+threshold = 2.0
 
 # Read the fixed JSON file and start balance
 data = read_json_file('stats.json')
 
 @app.route('/balance', methods=['POST'])
+
 def balance_teams_api():
     # Get the list of players from the JSON payload
     players = request.json['players']
@@ -357,6 +365,3 @@ def balance_teams_api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-#if __name__ == '__main__':
-#    main()
