@@ -360,7 +360,7 @@ data = read_json_file('stats.json')
 
 @app.route('/balance', methods=['POST'])
 
-def balance_teams_api():
+def balance_teams_api_old():
     # Get the list of players from the JSON payload
     players = request.json['players']
 
@@ -385,6 +385,35 @@ def balance_teams_api():
 
 #    # Return the JSON response with the appropriate headers
 #    return Response(response_data, headers=headers)
+
+    return jsonify(top_teams)
+
+
+def balance_teams_api():
+    # Get the list of players from the JSON payload
+    players = request.json.get('players', [])
+
+    # Filter data for specific players
+    filtered_data = filter_player_stats(data, players)
+
+    # Balance teams
+    teams = balance_teams(filtered_data, threshold)
+
+    # Check if teams are balanced
+    if len(teams) == 0:
+        return jsonify({'error': 'Cannot balance teams with the given threshold and maximum number of attempts.'}), 400
+
+    # Return the top teams as JSON
+    top_teams = get_top_teams_list(teams, 5)
+
+    # Serialize the response data to JSON format
+    #response_data = json.dumps(top_teams)
+
+    # Set the Content-Type header to indicate that the response is in JSON format
+    #headers = {'Content-Type': 'application/json'}
+
+    # Return the JSON response with the appropriate headers
+    #return Response(response_data, headers=headers)
 
     return jsonify(top_teams)
 
