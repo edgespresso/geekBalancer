@@ -474,11 +474,11 @@ def balance_teams_api():
     print(captains[0])
     print(captains[1])
     print("")
-    filtered_data = filter_teams_by_captains(response_data, captains[0], captains[1])
-    print(json.dumps(filtered_data, indent=4))
+    #filtered_data = filter_teams_by_captains(response_data, captains[0], captains[1])
+    #print(json.dumps(filtered_data, indent=4))
 
     # Serialize the response data to JSON format
-    response_data = json.dumps(filtered_data)
+    #response_data = json.dumps(filtered_data)
 
     # Set the Content-Type header to indicate that the response is in JSON format
     headers = {'Content-Type': 'application/json'}
