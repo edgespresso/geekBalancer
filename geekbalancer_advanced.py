@@ -1,6 +1,7 @@
 import  json
 import  requests
 from    flask import Flask, request, jsonify, Response
+from datetime import datetime, timedelta
 
 def create_api_string(base_url, start_date, end_date):
     """
@@ -90,22 +91,45 @@ def read_json_file(filename):
 
 def filter_player_stats(data, players):
     """
-    Filters the given data to only include stats for the specified players.
+    Filters the given stats data to only include stats for the specified players.
 
     Args:
         data (list): A list of dictionaries containing player stats.
-        players (list): A list of player names to filter the data for.
+        players (list): A list of player handles to filter the data.
 
     Returns:
         list: A list of dictionaries containing stats for the specified players.
     """
+    mydata_parsed = json.loads(data)
     filtered_data = []
     for player in players:
-        for item in data:
-            if item['player'] == player:
-                filtered_data.append(item)
+        print(f"Filtering stats for player '{player}'...")
+        for entry in mydata_parsed:
+            if entry['player'] == player:
+                print(f"Adding player: {entry['player']}")
+                filtered_data.append(entry)
                 break
+
     return filtered_data
+
+def find_captains(players):
+    """
+    Finds the captains from the given list of players.
+
+    Args:
+        players (list): A list of dictionaries containing player data.
+
+    Returns:
+        A list of dictionaries containing the captain data.
+    """
+    players_parsed = json.loads(players)
+    captains = []
+    for player in players_parsed:
+        if player['captain'] == 'TRUE':
+            captains.append(player)
+
+    return captains
+
 
 def calculate_composite_score(player_data):
     """
@@ -348,6 +372,30 @@ def get_top_teams_list(teams, max_teams=10, output_file='top_teams.json'):
     print(json.dumps(top_teams, indent=4))
     return(top_teams)
 
+def filter_teams_by_captains(data, captain1, captain2):
+    """
+    Filters the given JSON payload based on the captains' names.
+
+    Args:
+        data (list): A list of dictionaries containing team data.
+        captain1 (str): The name of the captain for team A.
+        captain2 (str): The name of the captain for team B.
+
+    Returns:
+        A list of dictionaries containing the team data that match the captains' names.
+    """
+    mydata_parsed = json.loads(data)
+    filtered_data = []
+    for item in mydata_parsed:
+        team_a_captain = next((player for player in item['team_a']['players'] if player['player_name'] == captain1), None)
+        team_b_captain = next((player for player in item['team_b']['players'] if player['player_name'] == captain2), None)
+        if team_a_captain and team_b_captain and team_a_captain != team_b_captain:
+            filtered_data.append(item)
+    return filtered_data
+
+
+
+
 ###################################################################################################
 
 app = Flask(__name__)
@@ -359,63 +407,84 @@ threshold = 2.0
 data = read_json_file('stats.json')
 
 @app.route('/balance', methods=['POST'])
-
-def balance_teams_api_old():
-    # Get the list of players from the JSON payload
-    players = request.json['players']
-
-    # Filter data for specific players
-    filtered_data = filter_player_stats(data, players)
-
-    # Balance teams
-    teams = balance_teams(filtered_data, threshold)
-
-    # Check if teams are balanced
-    if len(teams) == 0:
-        return jsonify({'error': 'Cannot balance teams with the given threshold and maximum number of attempts.'}), 400
-
-    # Return the top teams as JSON
-    top_teams = get_top_teams_list(teams, 5)
-
-#    # Serialize the response data to JSON format
-#    response_data = json.dumps(top_teams)
-
-#    # Set the Content-Type header to indicate that the response is in JSON format
-#    headers = {'Content-Type': 'application/json'}
-
-#    # Return the JSON response with the appropriate headers
-#    return Response(response_data, headers=headers)
-
-    return jsonify(top_teams)
-
-
 def balance_teams_api():
-    # Get the list of players from the JSON payload
-    players = request.json.get('players', [])
+    # Set threshold
+    threshold = 3.0
 
-    # Filter data for specific players
-    filtered_data = filter_player_stats(data, players)
+    # Set parameters for the API call
+    base_url    = "http://stats.geekfestclan.com/api/stats/playerstats/"
+    
+    # Get the date 6 months ago from today
+    start_date = (datetime.today() - timedelta(days=30*6)).strftime('%Y-%m-%d')
+    end_date = datetime.today().strftime('%Y-%m-%d')
+
+    api_string  = create_api_string(base_url, start_date, end_date)
+    statsURL    = api_string
+
+    # Get the latest stats for all players
+    all_stats = get_json_from_api(statsURL)
+    print("STATS FROM API")
+    print(all_stats)
+    print("")
+
+    # Get the list of players from the JSON payload
+    players = request.get_json()
+    print("PLAYERS FROM DISCORD")
+    print(players)
+    print("")
+
+    #print(find_captains(players))
+    captains = []
+    for player in players:
+        if player['captain'] == 'TRUE':
+            captains.append(player['handle'])
+    print("CAPTAINS FROM DISCORD")
+    print(captains)
+    print("")
+
+    # Get the list of players from the JSON payload
+    print("PLAYER HANDLES FROM DISCORD")
+    player_handles = []
+    for player in players:
+        player_handles.append(player['handle'])
+    print(player_handles)
+    print("")
+    
+    # Filter stats for specific players only
+    filtered_stats = filter_player_stats(all_stats, player_handles)
+    print("FILTERED STATS")
+    print(filtered_stats)
+    print("")
 
     # Balance teams
-    teams = balance_teams(filtered_data, threshold)
+    teams = balance_teams(filtered_stats, threshold)
 
     # Check if teams are balanced
     if len(teams) == 0:
         return jsonify({'error': 'Cannot balance teams with the given threshold and maximum number of attempts.'}), 400
 
     # Return the top teams as JSON
-    top_teams = get_top_teams_list(teams, 5)
+    top_teams = get_top_teams_list(teams, 10)
 
     # Serialize the response data to JSON format
-    #response_data = json.dumps(top_teams)
+    response_data = json.dumps(top_teams)
+
+    print("FILTERED TEAMS")
+    print("")
+    print(captains[0])
+    print(captains[1])
+    print("")
+    filtered_data = filter_teams_by_captains(response_data, captains[0], captains[1])
+    print(json.dumps(filtered_data, indent=4))
+
+    # Serialize the response data to JSON format
+    response_data = json.dumps(filtered_data)
 
     # Set the Content-Type header to indicate that the response is in JSON format
-    #headers = {'Content-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json'}
 
     # Return the JSON response with the appropriate headers
-    #return Response(response_data, headers=headers)
-
-    return jsonify(top_teams)
+    return Response(response_data, headers=headers)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
