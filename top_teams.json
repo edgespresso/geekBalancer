@@ -2,23 +2,519 @@
     {
         "team_a": {
             "team_name": "Alpha",
-            "team_score": 0.9578248345,
-            "team_num_players": 1,
+            "team_score": 4.8261069714,
+            "team_num_players": 5,
             "players": [
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
                 {
                     "player_name": "Yakobay",
                     "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
                 }
             ]
         },
         "team_b": {
             "team_name": "Bravo",
-            "team_score": 1.2396957364,
-            "team_num_players": 1,
+            "team_score": 4.8982846856,
+            "team_num_players": 4,
             "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 4.8990492771,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.8253423799,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
                 {
                     "player_name": "Edge",
                     "player_score": 1.2397
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 4.9652990563,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.7590926007,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 4.9865982759,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.7377933811,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 5.0595405816,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.6648510754,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 5.1257903609,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.5986012961,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 5.180920179,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.543471478,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 5.1814417573,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.5429498997,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 5.2519267702,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.4724648868,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
+                }
+            ]
+        }
+    },
+    {
+        "team_a": {
+            "team_name": "Alpha",
+            "team_score": 5.254384063,
+            "team_num_players": 5,
+            "players": [
+                {
+                    "player_name": "The Salty Spittoon",
+                    "player_score": 1.3126
+                },
+                {
+                    "player_name": "Kurevan",
+                    "player_score": 1.2367
+                },
+                {
+                    "player_name": "Toze",
+                    "player_score": 1.1734
+                },
+                {
+                    "player_name": "Yakobay",
+                    "player_score": 0.9578
+                },
+                {
+                    "player_name": "Ogre",
+                    "player_score": 0.5738
+                }
+            ]
+        },
+        "team_b": {
+            "team_name": "Bravo",
+            "team_score": 4.470007594,
+            "team_num_players": 4,
+            "players": [
+                {
+                    "player_name": "Nuticles",
+                    "player_score": 1.3072
+                },
+                {
+                    "player_name": "Edge",
+                    "player_score": 1.2397
+                },
+                {
+                    "player_name": "Mailboxhead",
+                    "player_score": 1.0418
+                },
+                {
+                    "player_name": "Duckhead",
+                    "player_score": 0.8813
                 }
             ]
         }

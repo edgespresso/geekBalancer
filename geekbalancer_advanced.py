@@ -211,6 +211,10 @@ def assign_players(data, threshold):
     
     # Sort players by composite score
     scores.sort(key=lambda x: x[1], reverse=True)
+    
+    print("\nPLAYER\n")
+    print(player)
+    print("")
 
     # Assign players to teams
     team_a = []
@@ -290,47 +294,19 @@ def print_top_teams(teams, max_teams=10):
             print(f" - {name} ({score:.4f})")
         print()
 
-def local_balance():
-    # Set threshold
-    threshold = 3.0
-
-    # Set parameters for the API call
-    base_url    = "http://stats.geekfestclan.com/api/stats/playerstats/"
-    start_date  = "2023-02-28"
-    end_date    = "2023-08-30"
-    api_string  = create_api_string(base_url, start_date, end_date)
-    statsURL    = api_string
-
-    print("\nGEEKFEST GEEK BALANCER\n")
-    print(f"Start Date : {start_date}")
-    print(f"End Date   : {end_date}")
-
-    # Read JSON data from file
-    #data_temp = get_json_from_api(statsURL)
-
-    # Write FIXED JSON data to file
-    #write_json_file('stats.json', data_temp)
-    
-    # Read the fixed JSON file and start balance
-    data = read_json_file('stats.json')
-    
-    if data is None:
-        return
-
-    # Balance teams
-    teams = balance_teams(data, threshold)
-
-    # Check if teams are balanced
-    if len(teams) == 0:
-        print("Cannot balance teams with the given threshold and maximum number of attempts.")
-        return
-
-    # Print top teams
-    print_top_teams(teams, 5)
-
 def create_team_json_list(team, team_name, team_score):
     players = []
     for name, score in team:
+        # Get discord_id from players
+        discord_id = next((player['discord_id'] for player in players if player['player_name'] == name), None)
+        # Get steam_id from players
+        steam_id = next((player['steam_id'] for player in players if player['player_name'] == name), None)
+        # Get captain from players
+        captain = next((player['captain'] for player in players if player['player_name'] == name), None)
+        print(f"Discord ID: {discord_id}")
+        print(f"Steam ID: {steam_id}")
+        print(f"Captain: {captain}")
+
         player = {
             'player_name': name,
             'player_score': round(score, 4)
@@ -344,21 +320,7 @@ def create_team_json_list(team, team_name, team_score):
     }
     return team_json
 
-def get_top_teams_list_old(teams, max_teams=10):
-    sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
-    top_teams = []
-    for team_a, team_b in sorted_teams[:max_teams]:
-        team_a_score = sum([score for _, score in team_a])
-        team_b_score = sum([score for _, score in team_b])
-        team_a_json = create_team_json_list(team_a, 'Alpha', team_a_score)
-        team_b_json = create_team_json_list(team_b, 'Bravo', team_b_score)
-        top_teams.append(team_a_json)
-        top_teams.append(team_b_json)
-    with open("teams.json", 'w') as f:
-        json.dump(top_teams, f, indent=4)
-    print(json.dumps(top_teams, indent=4))
-
-def get_top_teams_list(teams, max_teams=10, output_file='top_teams.json'):
+def get_top_teams(teams, max_teams=10, output_file='top_teams.json'):
     sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
     top_teams = []
     for team_a, team_b in sorted_teams[:max_teams]:
@@ -393,7 +355,14 @@ def filter_teams_by_captains(data, captain1, captain2):
             filtered_data.append(item)
     return filtered_data
 
-
+def get_player_data(player_name, player_data):
+    # Check if the player name is in the player data dictionary
+    if player_name in player_data:
+        # Return the steam ID and handle for the player
+        return player_data[player_name]['steam_id'], player_data[player_name]['handle']
+    else:
+        # Return None if the player name is not found
+        return None, None
 
 
 ###################################################################################################
@@ -403,77 +372,93 @@ app = Flask(__name__)
 # Set threshold
 threshold = 2.0
 
-# Read the fixed JSON file and start balance
-data = read_json_file('stats.json')
-
 @app.route('/balance', methods=['POST'])
 def balance_teams_api():
-    # Set threshold
-    threshold = 3.0
-
     # Set parameters for the API call
     base_url    = "http://stats.geekfestclan.com/api/stats/playerstats/"
     
     # Get the date 6 months ago from today
-    start_date = (datetime.today() - timedelta(days=30*6)).strftime('%Y-%m-%d')
-    end_date = datetime.today().strftime('%Y-%m-%d')
+    start_date  = (datetime.today() - timedelta(days=30*6)).strftime('%Y-%m-%d')
+    end_date    = datetime.today().strftime('%Y-%m-%d')
 
+    # Create the fully qualified API string
     api_string  = create_api_string(base_url, start_date, end_date)
     statsURL    = api_string
 
     # Get the latest stats for all players
     all_stats = get_json_from_api(statsURL)
-    print("STATS FROM API")
+    print("STATS FROM API [all_stats]]")
     print(all_stats)
     print("")
 
     # Get the list of players from the JSON payload
-    players = request.get_json()
-    print("PLAYERS FROM DISCORD")
-    print(players)
+    discord_players = request.get_json()
+    print("PLAYERS FROM DISCORD [discord_players]")
+    print(discord_players)
     print("")
 
-    #print(find_captains(players))
+    # Get the captains from discord_players
     captains = []
-    for player in players:
+    for player in discord_players:
         if player['captain'] == 'TRUE':
             captains.append(player['handle'])
-    print("CAPTAINS FROM DISCORD")
+    print("CAPTAINS FROM DISCORD [captains]")
     print(captains)
     print("")
 
-    # Get the list of players from the JSON payload
-    print("PLAYER HANDLES FROM DISCORD")
+    # Create an empty dictionary to store the player data
+    player_dict = {}
+
+    # Loop through each player in the discord players list
+    for player in discord_players:
+        # Add the player data to the dictionary using the player name as the key
+        player_dict[player['handle']] = {
+            'steam_id': player['steam_id'],
+            'handle': player['handle']
+        }
+    print("PLAYER DICTIONARY [player_dict]")
+    print(player_dict)
+    print("")
+    print(get_player_data('Edge', player_dict))
+
+    # Get the list of player names from discord_players
+    print("PLAYER HANDLES FROM DISCORD [player_handles]")
     player_handles = []
-    for player in players:
+    for player in discord_players:
         player_handles.append(player['handle'])
     print(player_handles)
     print("")
     
-    # Filter stats for specific players only
+    # Filter stats for only the specified player handles from the discord json payload
     filtered_stats = filter_player_stats(all_stats, player_handles)
-    print("FILTERED STATS")
+    print("FILTERED STATS [filtered_stats]")
     print(filtered_stats)
     print("")
 
-    # Balance teams
+    # Create balanced teams within the specified threshold
     teams = balance_teams(filtered_stats, threshold)
 
-    # Check if teams are balanced
+    # Check if balanced teams were possible for the specified players
     if len(teams) == 0:
         return jsonify({'error': 'Cannot balance teams with the given threshold and maximum number of attempts.'}), 400
 
-    # Return the top teams as JSON
-    top_teams = get_top_teams_list(teams, 10)
+    # Return the specified number of teams (sorted by difference in team scores in descending order)
+    top_teams = get_top_teams(teams, 10)
+
 
     # Serialize the response data to JSON format
+    # Send back the top_teams
     response_data = json.dumps(top_teams)
+    print("RESPONSE DATA")
+    print(response_data)
+    print("")
 
-    print("FILTERED TEAMS")
-    print("")
-    print(captains[0])
-    print(captains[1])
-    print("")
+
+    #print("FILTERED TEAMS")
+    #print("")
+    #print(captains[0])
+    #print(captains[1])
+    #print("")
     #filtered_data = filter_teams_by_captains(response_data, captains[0], captains[1])
     #print(json.dumps(filtered_data, indent=4))
 
