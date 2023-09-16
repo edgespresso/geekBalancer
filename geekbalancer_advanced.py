@@ -129,12 +129,12 @@ def find_captains(players):
     return captains
 
 
-def calculate_composite_score(player_data):
+def calculate_composite_score(player):
     """
     Calculates the composite score for a player based on their performance data.
 
     Args:
-        player_data (dict): A dictionary containing the player's performance data, including:
+        player (dict): A dictionary containing the player's performance data, including:
             - kdr (float): Kill-death ratio.
             - akdr (float): Asist-kill-death ratio.
             - alltime_kdr (float): All-time kill-death ratio.
@@ -149,15 +149,15 @@ def calculate_composite_score(player_data):
         float: The composite score for the player.
     """
     # Get player data into variables
-    kdr         = player_data.get('kdr', 0)
-    akdr        = player_data.get('akdr', 0)
-    alltime_kdr = player_data.get('alltime_kdr', 0)
-    year_kdr    = player_data.get('year_kdr', 0)
-    last90_kdr  = player_data.get('last90_kdr', 0)
-    kills       = player_data.get('kills', 0)
-    deaths      = player_data.get('deaths', 0)
-    assists     = player_data.get('assists', 0)
-    tier        = player_data.get('tier', '')
+    kdr         = player.get('kdr', 0)
+    akdr        = player.get('akdr', 0)
+    alltime_kdr = player.get('alltime_kdr', 0)
+    year_kdr    = player.get('year_kdr', 0)
+    last90_kdr  = player.get('last90_kdr', 0)
+    kills       = player.get('kills', 0)
+    deaths      = player.get('deaths', 0)
+    assists     = player.get('assists', 0)
+    tier        = player.get('tier', '')
 
     # Check types and replace None with 0
     if not isinstance(kdr, (int, float)):
@@ -190,20 +190,19 @@ def calculate_composite_score(player_data):
         tier == 'West1: Master'
     ]) / 9.0
 
-def assign_players(data, threshold):
+def assign_players(filtered_stats):
     """
     Assigns players to two teams based on their composite score, ensuring that the teams are balanced.
 
     Args:
-        data (list): A list of player dictionaries, where each dictionary contains the player's name and stats.
-        threshold (float): The minimum composite score required for a player to be considered for team assignment.
+        filtered_stats (list): A list of player dictionaries, where each dictionary contains the player's name and stats.
 
     Returns:
         tuple: A tuple containing two lists of player tuples, where each player tuple contains the player's name and composite score.
     """
     # Calculate composite score for each player
     scores = []
-    for player in data:
+    for player in filtered_stats:
         composite_score = calculate_composite_score(player)
         scores.append((player['player'], composite_score))
     
@@ -219,7 +218,7 @@ def assign_players(data, threshold):
         else:
             team_b.append((player, score))
 
-    # Check if teams are balanced
+    # Check if teams are balanced by player count (within 1 player)
     while abs(len(team_a) - len(team_b)) > 1:
         if len(team_a) > len(team_b):
             player, score = team_a.pop()
@@ -230,13 +229,25 @@ def assign_players(data, threshold):
 
     return team_a, team_b
 
-def balance_teams(data, threshold, max_attempts=1):
+def balance_teams(filtered_stats, threshold, max_attempts=1):
+    """
+    Balances teams based on the given player stats and a threshold value.
+
+    Args:
+        filtered_stats (list): A list of tuples containing player names and their corresponding stats.
+        threshold (float): The maximum difference allowed between the total scores of the two teams.
+        max_attempts (int, optional): The maximum number of attempts to balance the teams. Defaults to 1.
+
+    Returns:
+        list: A list of tuples containing two teams, each represented as a list of player names and their corresponding stats.
+              If no balanced teams can be generated, returns None.
+    """
     teams = []
     attempts = 0
     while len(teams) < 5 and attempts < max_attempts:
         attempts += 1
         # Create teams
-        team_a, team_b = assign_players(data, threshold)
+        team_a, team_b = assign_players(filtered_stats)
 
         # Check if teams are balanced
         team_a_score = sum([score for _, score in team_a])
@@ -270,6 +281,13 @@ def balance_teams(data, threshold, max_attempts=1):
     return new_teams
 
 def print_top_teams(teams, max_teams=10):
+    """
+    Prints the top team configurations sorted by score differential.
+
+    Args:
+        teams (list): A list of tuples, where each tuple contains two lists of player names and scores.
+        max_teams (int, optional): The maximum number of teams to print. Defaults to 10.
+    """
     sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
     print(f"\nTop {max_teams} Team Configurations - Sorted by Score Differential\n")
     for i, (team_a, team_b) in enumerate(sorted_teams[:max_teams]):
@@ -288,7 +306,19 @@ def print_top_teams(teams, max_teams=10):
             print(f" - {name} ({score:.4f})")
         print()
 
-def create_team_json_list(team, team_name, team_score, player_dict):
+def create_team_json(team, team_name, team_score, player_dict):
+    """
+    Creates a JSON object representing a team, including its name, score, number of players, and player information.
+
+    Args:
+        team (list): A list of tuples containing player names and scores.
+        team_name (str): The name of the team.
+        team_score (float): The total score of the team.
+        player_dict (dict): A dictionary containing player information, including Discord name and Steam ID.
+
+    Returns:
+        dict: A JSON object representing the team, including its name, score, number of players, and player information.
+    """
     players = []
     for name, score in team:
 
@@ -314,16 +344,27 @@ def create_team_json_list(team, team_name, team_score, player_dict):
     return team_json
 
 def get_top_teams(teams, player_dict, max_teams=10, output_file='top_teams.json'):
+    """
+    Returns a list of top teams based on the difference in scores between two teams.
+    
+    Args:
+    - teams (list): A list of tuples, where each tuple contains two lists of player names and their scores.
+    - player_dict (dict): A dictionary containing player names as keys and their corresponding details as values.
+    - max_teams (int): The maximum number of top teams to return. Default is 10.
+    - output_file (str): The name of the output file to save the top teams in JSON format. Default is 'top_teams.json'.
+    
+    Returns:
+    - top_teams (list): A list of dictionaries, where each dictionary contains two keys 'team_a' and 'team_b', 
+                        each with a value of a JSON object representing the team details.
+    """
     sorted_teams = sorted(teams, key=lambda x: abs(sum([score for _, score in x[0]]) - sum([score for _, score in x[1]])))
     top_teams = []
     for team_a, team_b in sorted_teams[:max_teams]:
         team_a_score = sum([score for _, score in team_a])
         team_b_score = sum([score for _, score in team_b])
-        team_a_json = create_team_json_list(team_a, 'Alpha', team_a_score, player_dict)
-        team_b_json = create_team_json_list(team_b, 'Bravo', team_b_score, player_dict)
+        team_a_json = create_team_json(team_a, 'Alpha', team_a_score, player_dict)
+        team_b_json = create_team_json(team_b, 'Bravo', team_b_score, player_dict)
         top_teams.append({'team_a': team_a_json, 'team_b': team_b_json})
-    with open(output_file, 'w') as f:
-        json.dump(top_teams, f, indent=4)
     #print(json.dumps(top_teams, indent=4))
     return(top_teams)
 
