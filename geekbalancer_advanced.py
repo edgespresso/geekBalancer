@@ -343,15 +343,14 @@ def create_team_json(team, team_name, team_score, player_dict):
     }
     return team_json
 
-def get_top_teams(teams, player_dict, max_teams=10, output_file='top_teams.json'):
+def get_top_teams(teams, player_dict, max_teams):
     """
     Returns a list of top teams based on the difference in scores between two teams.
     
     Args:
     - teams (list): A list of tuples, where each tuple contains two lists of player names and their scores.
     - player_dict (dict): A dictionary containing player names as keys and their corresponding details as values.
-    - max_teams (int): The maximum number of top teams to return. Default is 10.
-    - output_file (str): The name of the output file to save the top teams in JSON format. Default is 'top_teams.json'.
+    - max_teams (int): The maximum number of top teams to return.
     
     Returns:
     - top_teams (list): A list of dictionaries, where each dictionary contains two keys 'team_a' and 'team_b', 
@@ -403,8 +402,14 @@ def get_player_data(player_name, player_data):
 
 app = Flask(__name__)
 
+# Set debug mode
+debug = False
+
 # Set threshold
 threshold = 2.0
+
+# Set the number of teams to return
+num_teams = 10
 
 @app.route('/balance', methods=['POST'])
 def balance_teams_api():
@@ -422,24 +427,27 @@ def balance_teams_api():
     # Get the latest stats for all players (passed on the start and end date)
     # We get all the stats for all the players on the server - then we filter based on who is currently in discord
     all_stats = get_json_from_api(statsURL)
-    print("STATS FROM API [all_stats]]")
-    print(all_stats)
-    print("")
+    if debug:
+        print("STATS FROM API [all_stats]]")
+        print(all_stats)
+        print("")
 
     # Get the list of players being passed to the API from discord via JSON
     discord_players = request.get_json()
-    print("PLAYERS FROM DISCORD [discord_players]")
-    print(discord_players)
-    print("")
+    if debug:
+        print("PLAYERS FROM DISCORD [discord_players]")
+        print(discord_players)
+        print("")
 
     # Get the captains from discord_players (should be 2)
     captains = []
     for player in discord_players:
         if player['captain'] == 'TRUE':
             captains.append(player['handle'])
-    print("CAPTAINS FROM DISCORD [captains]")
-    print(captains)
-    print("")
+    if debug:
+        print("CAPTAINS FROM DISCORD [captains]")
+        print(captains)
+        print("")
 
     # Create an empty dictionary to store the player data (discord name, steam id, csgo handle)
     # This makes it easier to pass this information to the final function that creates the teams
@@ -452,24 +460,27 @@ def balance_teams_api():
             'steam_id': player['steam_id'],
             'discord': player['discord']
         }
-    print("PLAYER DICTIONARY [player_dict]")
-    print(player_dict)
-    print("")
+    if debug:
+        print("PLAYER DICTIONARY [player_dict]")
+        print(player_dict)
+        print("")
 
     # Get the list of player names from discord_players
     # We use this simple list to filter the stats to only the current players in discord
-    print("PLAYER HANDLES FROM DISCORD [player_handles]")
     player_handles = []
     for player in discord_players:
         player_handles.append(player['handle'])
-    print(player_handles)
-    print("")
+    if debug:
+        print("PLAYER HANDLES FROM DISCORD [player_handles]")
+        print(player_handles)
+        print("")
     
     # Filter stats for only the specified player handles
     filtered_stats = filter_player_stats(all_stats, player_handles)
-    print("FILTERED STATS [filtered_stats]")
-    print(filtered_stats)
-    print("")
+    if debug:
+        print("FILTERED STATS [filtered_stats]")
+        print(filtered_stats)
+        print("")
 
     # Create balanced teams within the specified threshold for only the filtered players
     teams = balance_teams(filtered_stats, threshold)
@@ -479,21 +490,63 @@ def balance_teams_api():
         return jsonify({'error': 'Cannot balance teams with the given threshold and maximum number of attempts.'}), 400
 
     # Return the specified number of teams (sorted by difference in team scores in descending order)
-    top_teams = get_top_teams(teams, player_dict, 10)
+    top_teams = get_top_teams(teams, player_dict, num_teams)
 
     # Serialize the response data to JSON format
     # Send back the top_teams
     response_data = json.dumps(top_teams)
 
-    # filter the response data to only include the teams with the specified captains
-    
-    #print("FILTERED TEAMS")
-    #print("")
-    #print(captains[0])
-    #print(captains[1])
-    #print("")
-    #filtered_data = filter_teams_by_captains(response_data, captains[0], captains[1])
-    #print(json.dumps(filtered_data, indent=4))
+
+
+    # Deserialize the response data from JSON format back into a list of teams
+    teams = json.loads(response_data)
+    print("TEAMS")
+    print(teams)
+    print("")
+
+    # Filter the teams to only include the teams with the specified captains
+    #filtered_by_capt = [team for team in teams if player_name(captains[0]) in team and player_name(captains[1]) in team and team.index(player_name(captains[0])) != team.index(player_name(captains[1]))]
+
+    #if debug:
+    print("FILTERED BY CAPT")
+    print(f"Captains: {captains}")
+    #print(filtered_by_capt)
+    print("")
+
+    # Check if the captains are on the same team
+    cap_teams = []
+    for team in teams:
+        team_a_captain1 = False
+        team_a_captain2 = False
+        team_b_captain1 = False
+        team_b_captain2 = False
+        for player in team['team_a']['players']:
+            print(player['player_name'])
+            if player['player_name'] == captains[0]:
+                print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM A")
+                team_a_captain1 = True
+            if player['player_name'] == captains[1]:
+                print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM A")
+                team_a_captain2 = True                    
+        for player in team['team_b']['players']:
+            if player['player_name'] == captains[0]:
+                print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM B")
+                team_b_captain1 = True
+            if player['player_name'] == captains[1]:
+                print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM B")
+                team_b_captain2 = True                    
+        print(team_a_captain1, team_a_captain2, team_b_captain1, team_b_captain2)
+        if (team_a_captain1 and team_a_captain2):
+            print("FOUND BOTH CAPTAINS ON TEAM A - Invalid Team")
+        elif (team_b_captain1 and team_b_captain2):
+            print("FOUND BOTH CAPTAINS ON TEAM B - Invalid Team")
+        else:
+            cap_teams.append(team)
+    print("CAP TEAMS")
+    print(cap_teams)
+    print("")
+    response_data = json.dumps(cap_teams)
+
 
     # Set the Content-Type header to indicate that the response is in JSON format
     headers = {'Content-Type': 'application/json'}
