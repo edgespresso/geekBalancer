@@ -306,7 +306,7 @@ def print_top_teams(teams, max_teams=10):
             print(f" - {name} ({score:.4f})")
         print()
 
-def create_team_json(team, team_name, team_score, player_dict):
+def create_team_json(team, team_name, team_score, player_dict, captains):
     """
     Creates a JSON object representing a team, including its name, score, number of players, and player information.
 
@@ -328,11 +328,18 @@ def create_team_json(team, team_name, team_score, player_dict):
         # get steam_id for the specified player handle from player_dict
         steam_id = player_dict[name]['steam_id']
 
+        # check if the player is a captain
+        if name in captains:
+            captain = True
+        else:
+            captain = False
+
         player = {
             'player_name': name,
             'player_score': round(score, 4),
             'discord': discord,
-            'steam_id': steam_id
+            'steam_id': steam_id,
+            'captain': captain
         }
         players.append(player)
     team_json = {
@@ -343,7 +350,7 @@ def create_team_json(team, team_name, team_score, player_dict):
     }
     return team_json
 
-def get_top_teams(teams, player_dict, max_teams):
+def get_top_teams(teams, player_dict, max_teams, captains):
     """
     Returns a list of top teams based on the difference in scores between two teams.
     
@@ -361,8 +368,8 @@ def get_top_teams(teams, player_dict, max_teams):
     for team_a, team_b in sorted_teams[:max_teams]:
         team_a_score = sum([score for _, score in team_a])
         team_b_score = sum([score for _, score in team_b])
-        team_a_json = create_team_json(team_a, 'Alpha', team_a_score, player_dict)
-        team_b_json = create_team_json(team_b, 'Bravo', team_b_score, player_dict)
+        team_a_json = create_team_json(team_a, 'Alpha', team_a_score, player_dict, captains)
+        team_b_json = create_team_json(team_b, 'Bravo', team_b_score, player_dict, captains)
         top_teams.append({'team_a': team_a_json, 'team_b': team_b_json})
     #print(json.dumps(top_teams, indent=4))
     return(top_teams)
@@ -490,29 +497,13 @@ def balance_teams_api():
         return jsonify({'error': 'Cannot balance teams with the given threshold and maximum number of attempts.'}), 400
 
     # Return the specified number of teams (sorted by difference in team scores in descending order)
-    top_teams = get_top_teams(teams, player_dict, num_teams)
+    top_teams = get_top_teams(teams, player_dict, num_teams, captains)
 
     # Serialize the response data to JSON format
-    # Send back the top_teams
     response_data = json.dumps(top_teams)
-
-
 
     # Deserialize the response data from JSON format back into a list of teams
     teams = json.loads(response_data)
-    print("TEAMS")
-    print(teams)
-    print("")
-
-    # Filter the teams to only include the teams with the specified captains
-    #filtered_by_capt = [team for team in teams if player_name(captains[0]) in team and player_name(captains[1]) in team and team.index(player_name(captains[0])) != team.index(player_name(captains[1]))]
-
-    #if debug:
-    print("FILTERED BY CAPT")
-    print(f"Captains: {captains}")
-    #print(filtered_by_capt)
-    print("")
-
     # Check if the captains are on the same team
     cap_teams = []
     for team in teams:
@@ -521,32 +512,30 @@ def balance_teams_api():
         team_b_captain1 = False
         team_b_captain2 = False
         for player in team['team_a']['players']:
-            print(player['player_name'])
             if player['player_name'] == captains[0]:
-                print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM A")
+                if debug: print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM A")
                 team_a_captain1 = True
             if player['player_name'] == captains[1]:
-                print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM A")
+                if debug: print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM A")
                 team_a_captain2 = True                    
         for player in team['team_b']['players']:
             if player['player_name'] == captains[0]:
-                print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM B")
+                if debug: print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM B")
                 team_b_captain1 = True
             if player['player_name'] == captains[1]:
-                print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM B")
+                if debug: print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM B")
                 team_b_captain2 = True                    
-        print(team_a_captain1, team_a_captain2, team_b_captain1, team_b_captain2)
         if (team_a_captain1 and team_a_captain2):
-            print("FOUND BOTH CAPTAINS ON TEAM A - Invalid Team")
+            if debug: print("FOUND BOTH CAPTAINS ON TEAM A - Invalid Team")
         elif (team_b_captain1 and team_b_captain2):
-            print("FOUND BOTH CAPTAINS ON TEAM B - Invalid Team")
+            if debug: print("FOUND BOTH CAPTAINS ON TEAM B - Invalid Team")
         else:
             cap_teams.append(team)
-    print("CAP TEAMS")
-    print(cap_teams)
-    print("")
+    if debug: 
+        print("TEAMS FILTER BY CAPTAINS")
+        print(cap_teams)
+        print("")
     response_data = json.dumps(cap_teams)
-
 
     # Set the Content-Type header to indicate that the response is in JSON format
     headers = {'Content-Type': 'application/json'}
