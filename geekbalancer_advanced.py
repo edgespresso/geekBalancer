@@ -553,7 +553,7 @@ def balance_teams_api():
     timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
 
     # Log the message with the timestamp
-    logging.info(f"{timestamp} - GEEKBALANCER RESULT - Balanced {num_cap_teams} teams for Captains: {captains[0]} and {captains[1]}")
+    logging.info(f"[geekBalancer] - {timestamp} - Balanced {num_cap_teams} teams for Captains: {captains[0]} and {captains[1]}")
 
     # Set the Content-Type header to indicate that the response is in JSON format
     headers = {'Content-Type': 'application/json'}
