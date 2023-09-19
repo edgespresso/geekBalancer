@@ -6,6 +6,8 @@ from    datetime import datetime, timedelta
 
 # Set up logging
 logging.basicConfig(filename='geekbalancer.log', level=logging.INFO)
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.WARNING)
 
 def create_api_string(base_url, start_date, end_date):
     """
