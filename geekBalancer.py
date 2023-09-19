@@ -5,7 +5,7 @@ from    flask import Flask, request, jsonify, Response
 from    datetime import datetime, timedelta
 
 # Set up logging
-logging.basicConfig(filename='geekbalancer.log', level=logging.INFO)
+logging.basicConfig(filename='geekBalancer.log', level=logging.INFO)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.WARNING)
 
