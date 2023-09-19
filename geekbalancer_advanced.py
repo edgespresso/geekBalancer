@@ -1,7 +1,11 @@
 import  json
 import  requests
+import  logging
 from    flask import Flask, request, jsonify, Response
-from datetime import datetime, timedelta
+from    datetime import datetime, timedelta
+
+# Set up logging
+logging.basicConfig(filename='geekbalancer.log', level=logging.INFO)
 
 def create_api_string(base_url, start_date, end_date):
     """
@@ -393,6 +397,7 @@ def filter_teams_by_captains(data, captain1, captain2):
         team_b_captain = next((player for player in item['team_b']['players'] if player['player_name'] == captain2), None)
         if team_a_captain and team_b_captain and team_a_captain != team_b_captain:
             filtered_data.append(item)
+
     return filtered_data
 
 def get_player_data(player_name, player_data):
@@ -506,6 +511,7 @@ def balance_teams_api():
     teams = json.loads(response_data)
     # Check if the captains are on the same team
     cap_teams = []
+    num_cap_teams = 0
     for team in teams:
         team_a_captain1 = False
         team_a_captain2 = False
@@ -531,11 +537,21 @@ def balance_teams_api():
             if debug: print("FOUND BOTH CAPTAINS ON TEAM B - Invalid Team")
         else:
             cap_teams.append(team)
+            num_cap_teams = num_cap_teams + 1
     if debug: 
         print("TEAMS FILTER BY CAPTAINS")
         print(cap_teams)
         print("")
     response_data = json.dumps(cap_teams)
+
+    # Get the current date and time
+    now = datetime.now() 
+
+    # Format the date and time as a string
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Log the message with the timestamp
+    logging.info(f"{timestamp} - GEEKBALANCER RESULT - Balanced {num_cap_teams} teams for Captains: {captains[0]} and {captains[1]}")
 
     # Set the Content-Type header to indicate that the response is in JSON format
     headers = {'Content-Type': 'application/json'}
@@ -544,4 +560,4 @@ def balance_teams_api():
     return Response(response_data, headers=headers)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=False, host='0.0.0.0')
