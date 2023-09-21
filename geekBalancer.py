@@ -114,6 +114,23 @@ def filter_player_stats(data, players):
                 filtered_data.append(entry)
                 break
 
+    # Check if the number of players is odd
+    if len(filtered_data) % 2 != 0:
+        # Add a dummy player with zero stats
+        dummy_player = {
+            'player': 'NONE',
+            'kdr': 0,
+            'akdr': 0,
+            'alltime_kdr': 0,
+            'year_kdr': 0,
+            'last90_kdr': 0,
+            'kills': 0,
+            'deaths': 0,
+            'assists': 0,
+            'tier': 'NONE'
+        }
+        filtered_data.append(dummy_player)
+
     return filtered_data
 
 def find_captains(players):
@@ -249,17 +266,14 @@ def balance_teams(filtered_stats, threshold, max_attempts=1):
               If no balanced teams can be generated, returns None.
     """
     teams = []
-    attempts = 0
-    while len(teams) < 5 and attempts < max_attempts:
-        attempts += 1
-        # Create teams
-        team_a, team_b = assign_players(filtered_stats)
+    # Create teams
+    team_a, team_b = assign_players(filtered_stats)
 
-        # Check if teams are balanced
-        team_a_score = sum([score for _, score in team_a])
-        team_b_score = sum([score for _, score in team_b])
-        if abs(team_a_score - team_b_score) <= threshold:
-            teams.append((team_a, team_b))
+    # Check if teams are balanced
+    team_a_score = sum([score for _, score in team_a])
+    team_b_score = sum([score for _, score in team_b])
+    if abs(team_a_score - team_b_score) <= threshold:
+        teams.append((team_a, team_b))
 
     if len(teams) == 0:
         print(f"Cannot balance teams with the given threshold ({threshold:.4f}) and maximum number of attempts ({max_attempts}).")
@@ -328,11 +342,13 @@ def create_team_json(team, team_name, team_score, player_dict, captains):
     players = []
     for name, score in team:
 
-        # get discord name for the specified player handle from player_dict
-        discord = player_dict[name]['discord']
-
-        # get steam_id for the specified player handle from player_dict
-        steam_id = player_dict[name]['steam_id']
+        # get discord name and steam_id for the specified player handle from player_dict
+        if name in player_dict:
+            discord = player_dict[name]['discord']
+            steam_id = player_dict[name]['steam_id']
+        else:
+            discord = "NONE"
+            steam_id = "NONE"
 
         # check if the player is a captain
         if name in captains:
@@ -380,27 +396,38 @@ def get_top_teams(teams, player_dict, max_teams, captains):
     #print(json.dumps(top_teams, indent=4))
     return(top_teams)
 
-def filter_teams_by_captains(data, captain1, captain2):
-    """
-    Filters the given JSON payload based on the captains' names.
-
-    Args:
-        data (list): A list of dictionaries containing team data.
-        captain1 (str): The name of the captain for team A.
-        captain2 (str): The name of the captain for team B.
-
-    Returns:
-        A list of dictionaries containing the team data that match the captains' names.
-    """
-    mydata_parsed = json.loads(data)
-    filtered_data = []
-    for item in mydata_parsed:
-        team_a_captain = next((player for player in item['team_a']['players'] if player['player_name'] == captain1), None)
-        team_b_captain = next((player for player in item['team_b']['players'] if player['player_name'] == captain2), None)
-        if team_a_captain and team_b_captain and team_a_captain != team_b_captain:
-            filtered_data.append(item)
-
-    return filtered_data
+def filter_teams_to_by_player_pair(teams, captain1, captain2):
+    # Check if the captains are on the same team
+    cap_teams = []
+    num_cap_teams = 0
+    for team in teams:
+        team_a_captain1 = False
+        team_a_captain2 = False
+        team_b_captain1 = False
+        team_b_captain2 = False
+        for player in team['team_a']['players']:
+            if player['player_name'] == captain1:
+                if debug: print(f"FOUND CAPTAIN 1 {captain1} ON TEAM A")
+                team_a_captain1 = True
+            if player['player_name'] == captain2:
+                if debug: print(f"FOUND CAPTAIN 2 {captain2} ON TEAM A")
+                team_a_captain2 = True                    
+        for player in team['team_b']['players']:
+            if player['player_name'] == captain1:
+                if debug: print(f"FOUND CAPTAIN 1 {captain1} ON TEAM B")
+                team_b_captain1 = True
+            if player['player_name'] == captain2:
+                if debug: print(f"FOUND CAPTAIN 2 {captain2} ON TEAM B")
+                team_b_captain2 = True                    
+        if (team_a_captain1 and team_a_captain2):
+            if debug: print("FOUND BOTH CAPTAINS ON TEAM A - Invalid Team")
+        elif (team_b_captain1 and team_b_captain2):
+            if debug: print("FOUND BOTH CAPTAINS ON TEAM B - Invalid Team")
+        else:
+            cap_teams.append(team)
+            num_cap_teams = num_cap_teams + 1
+    #response_data = json.dumps(cap_teams)
+    return cap_teams, num_cap_teams
 
 def get_player_data(player_name, player_data):
     # Check if the player name is in the player data dictionary
@@ -420,10 +447,10 @@ app = Flask(__name__)
 debug = False
 
 # Set threshold
-threshold = 2.0
+threshold = 12.0
 
 # Set the number of teams to return
-num_teams = 10
+num_teams = 300
 
 @app.route('/balance', methods=['POST'])
 def balance_teams_api():
@@ -511,39 +538,49 @@ def balance_teams_api():
 
     # Deserialize the response data from JSON format back into a list of teams
     teams = json.loads(response_data)
-    # Check if the captains are on the same team
-    cap_teams = []
-    num_cap_teams = 0
-    for team in teams:
-        team_a_captain1 = False
-        team_a_captain2 = False
-        team_b_captain1 = False
-        team_b_captain2 = False
-        for player in team['team_a']['players']:
-            if player['player_name'] == captains[0]:
-                if debug: print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM A")
-                team_a_captain1 = True
-            if player['player_name'] == captains[1]:
-                if debug: print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM A")
-                team_a_captain2 = True                    
-        for player in team['team_b']['players']:
-            if player['player_name'] == captains[0]:
-                if debug: print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM B")
-                team_b_captain1 = True
-            if player['player_name'] == captains[1]:
-                if debug: print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM B")
-                team_b_captain2 = True                    
-        if (team_a_captain1 and team_a_captain2):
-            if debug: print("FOUND BOTH CAPTAINS ON TEAM A - Invalid Team")
-        elif (team_b_captain1 and team_b_captain2):
-            if debug: print("FOUND BOTH CAPTAINS ON TEAM B - Invalid Team")
-        else:
-            cap_teams.append(team)
-            num_cap_teams = num_cap_teams + 1
+
+    # # Check if the captains are on the same team
+    # cap_teams = []
+    # num_cap_teams = 0
+    # for team in teams:
+    #     team_a_captain1 = False
+    #     team_a_captain2 = False
+    #     team_b_captain1 = False
+    #     team_b_captain2 = False
+    #     for player in team['team_a']['players']:
+    #         if player['player_name'] == captains[0]:
+    #             if debug: print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM A")
+    #             team_a_captain1 = True
+    #         if player['player_name'] == captains[1]:
+    #             if debug: print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM A")
+    #             team_a_captain2 = True                    
+    #     for player in team['team_b']['players']:
+    #         if player['player_name'] == captains[0]:
+    #             if debug: print(f"FOUND CAPTAIN 1 {captains[0]} ON TEAM B")
+    #             team_b_captain1 = True
+    #         if player['player_name'] == captains[1]:
+    #             if debug: print(f"FOUND CAPTAIN 2 {captains[1]} ON TEAM B")
+    #             team_b_captain2 = True                    
+    #     if (team_a_captain1 and team_a_captain2):
+    #         if debug: print("FOUND BOTH CAPTAINS ON TEAM A - Invalid Team")
+    #     elif (team_b_captain1 and team_b_captain2):
+    #         if debug: print("FOUND BOTH CAPTAINS ON TEAM B - Invalid Team")
+    #     else:
+    #         cap_teams.append(team)
+    #         num_cap_teams = num_cap_teams + 1
+    # if debug: 
+    #     print("TEAMS FILTER BY CAPTAINS")
+    #     print(cap_teams)
+    #     print("")
+    # response_data = json.dumps(cap_teams)
+
+    cap_teams, num_cap_teams = filter_teams_by_captains(teams, captains[0], captains[1])
+    #cap_teams, num_cap_teams = filter_teams_by_captains(cap_teams, "Nuticles", "Edge")
     if debug: 
         print("TEAMS FILTER BY CAPTAINS")
         print(cap_teams)
         print("")
+
     response_data = json.dumps(cap_teams)
 
     # Get the current date and time
@@ -562,4 +599,4 @@ def balance_teams_api():
     return Response(response_data, headers=headers)
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
