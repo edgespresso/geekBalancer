@@ -200,18 +200,20 @@ def calculate_composite_score(player):
     if not isinstance(assists, (int, float)):
         assists = 0
 
-    # Calculate composite score
-    return sum([
-        kdr,
-        akdr,
-        alltime_kdr,
-        year_kdr,
-        last90_kdr,
+    # Calculate weighted composite score
+    composite = sum([
+        kdr * 2.00,
+        akdr * 2.00,
+        last90_kdr * 1.50,
+        year_kdr * 1.25,
+        alltime_kdr * 1.00,
         kills / (deaths + 1),
         assists / (deaths + 1),
-        kills / (assists + 1),
-        tier == 'West1: Master'
-    ]) / 9.0
+        kills / (assists + 1)
+        #tier == 'West1: Master'
+    ]) / 8.0
+
+    return composite
 
 def assign_players(filtered_stats):
     """
