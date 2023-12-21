@@ -601,4 +601,4 @@ def balance_teams_api():
     return Response(response_data, headers=headers)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5000)
