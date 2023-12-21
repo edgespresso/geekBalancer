@@ -398,7 +398,7 @@ def get_top_teams(teams, player_dict, max_teams, captains):
     #print(json.dumps(top_teams, indent=4))
     return(top_teams)
 
-def filter_teams_to_by_player_pair(teams, captain1, captain2):
+def filter_teams_by_captains(teams, captain1, captain2):
     # Check if the captains are on the same team
     cap_teams = []
     num_cap_teams = 0
@@ -601,4 +601,4 @@ def balance_teams_api():
     return Response(response_data, headers=headers)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', port=5001)
